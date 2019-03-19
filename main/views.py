@@ -165,7 +165,7 @@ def start_timer():
     t.start()
 
 
-#webbrowser.open('http://127.0.0.1:8000/', new=2)
+webbrowser.open('http://127.0.0.1:8000/', new=2)
 start_timer()
 
 def index(request):
