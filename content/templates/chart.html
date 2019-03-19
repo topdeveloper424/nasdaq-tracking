@@ -1,0 +1,231 @@
+{% extends 'layouts/main.html' %}
+{% load staticfiles %}
+{% block content %}
+<style>
+canvas{
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+}
+</style>
+<div class="row">
+    <div class="page-header">
+        <div class="d-flex align-items-center">
+            <h2 class="page-header-title">Option Chain Chart View</h2>
+            <div>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="db-default.html"><i class="ti ti-home"></i></a></li>
+                    <li class="breadcrumb-item active">Chart View</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End Page Header -->
+<div class="row">
+    <div class="col-xl-12">
+        <!-- Sorting -->
+        <div class="widget has-shadow">
+            <div class="widget-header bordered no-actions d-flex align-items-center">
+                <button id="openModal" style="display:none" data-toggle="modal" data-target="#addModal"></button>
+                <select class="form-control" id="chartSelect" onchange="selectChart()" style="width:30%">
+                    <option value="0">1 Week</option>
+                    <option value="1">1 Month</option>
+                    <option value="2">6 Month</option>
+                    <option value="3">1 Year</option>
+                </select>
+                <select class="form-control" id="chartType" onchange="selectChart()" style="width:30%">
+                    <option value="0">Ask</option>
+                    <option value="1">Vol</option>
+                    <option value="2">Open Int</option>
+                </select>
+
+                <img src="{% static 'assets/img/loader.svg' %}" width="50" height="50" id="loader" style="display:none">
+
+            </div>
+            <div class="widget-body">
+                <canvas id="canvas"></canvas>
+            </div>
+        </div>
+        <!-- End Sorting -->
+    </div>
+</div>
+
+<script>
+    
+selectChart();
+function displayAskChart(jsondata){
+    date_array = [];
+    call_ask_data = [];
+    put_ask_data = [];
+    for(var i = jsondata.length -1; i>=0; i --){
+        item = jsondata[i];
+        date_array.push(item.update_time);
+        data = item.data;
+        json_field = JSON.parse(data);
+        call_ask_avg = 0;
+        put_ask_avg = 0;
+        for(var j=0; j < json_field.length; j ++){
+            fields = json_field[j].fields;
+            call_ask_avg += parseFloat(fields.call_ask);
+            put_ask_avg += parseFloat(fields.put_ask);
+        }
+        if(json_field.length > 0){
+            call_ask_avg = call_ask_avg/json_field.length
+            put_ask_avg = put_ask_avg/json_field.length
+        }
+        call_ask_data.push(call_ask_avg);
+        put_ask_data.push(put_ask_avg);
+
+    }
+    showChart(date_array, call_ask_data, put_ask_data);
+
+}
+
+function displayVolChart(jsondata){
+    date_array = [];
+    call_vol_data = [];
+    put_vol_data = [];
+    for(var i = jsondata.length -1; i>=0; i --){
+        item = jsondata[i];
+        date_array.push(item.update_time);
+        data = item.data;
+        json_field = JSON.parse(data);
+        call_vol_avg = 0;
+        put_vol_avg = 0;
+        for(var j=0; j < json_field.length; j ++){
+            fields = json_field[j].fields;
+            call_vol_avg += parseFloat(fields.call_vol);
+            put_vol_avg += parseFloat(fields.put_vol);
+        }
+        if(json_field.length > 0){
+            call_vol_avg = call_vol_avg/json_field.length
+            put_vol_avg = put_vol_avg/json_field.length
+        }
+        call_vol_data.push(call_vol_avg);
+        put_vol_data.push(put_vol_avg);
+
+    }
+    showChart(date_array, call_vol_data, put_vol_data);
+
+}
+
+function displayOpenChart(jsondata){
+    date_array = [];
+    call_open_data = [];
+    put_open_data = [];
+    for(var i = jsondata.length -1; i>=0; i --){
+        item = jsondata[i];
+        date_array.push(item.update_time);
+        data = item.data;
+        json_field = JSON.parse(data);
+        call_open_avg = 0;
+        put_open_avg = 0;
+        for(var j=0; j < json_field.length; j ++){
+            fields = json_field[j].fields;
+            call_open_avg += parseFloat(fields.call_open_int);
+            put_open_avg += parseFloat(fields.put_open_int);
+        }
+        if(json_field.length > 0){
+            call_open_avg = call_open_avg/json_field.length
+            put_open_avg = put_open_avg/json_field.length
+        }
+        call_open_data.push(call_open_avg);
+        put_open_data.push(put_open_avg);
+
+    }
+    showChart(date_array, call_open_data, put_open_data);
+
+}
+
+function showChart(date_array,call_data,put_data){
+    console.log(date_array);
+    console.log(call_data);
+    console.log(put_data);
+    var config = {
+        type: 'line',
+        data: {
+            labels: date_array,
+            datasets: [{
+                label: 'Calls',
+                backgroundColor: window.chartColors.red,
+                borderColor: window.chartColors.red,
+                data:call_data,
+                fill: false,
+            }, {
+                label: 'Puts',
+                fill: false,
+                backgroundColor: window.chartColors.blue,
+                borderColor: window.chartColors.blue,
+                data: put_data,
+            }]
+        },
+        options: {
+            responsive: true,
+            title: {
+                display: true,
+                text: 'Option Chain'
+            },
+            tooltips: {
+                mode: 'index',
+                intersect: false,
+            },
+            hover: {
+                mode: 'nearest',
+                intersect: true
+            },
+            scales: {
+                xAxes: [{
+                    display: true,
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'Time'
+                    }
+                }],
+                yAxes: [{
+                    display: true,
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'Value'
+                    }
+                }]
+            }
+        }
+    };
+
+    var ctx = document.getElementById('canvas').getContext('2d');
+    window.myLine = new Chart(ctx, config);
+
+
+}
+function selectChart(){
+    var chartSelect = $("#chartSelect").val();
+    var chartType = $("#chartType").val();
+        if(chartSelect != ""){
+            $.ajax({
+            async:false,
+            type: "GET",
+            url: "{% url 'main:get_chart_data' %}",
+            dataType: 'json',
+            data: {chartSelect:chartSelect,mode:0},
+            success: function (data) {
+                if(chartType == 0){
+                    displayAskChart(data);
+                }else if(chartType == 1){
+                    displayVolChart(data);
+                }else if(chartType == 2){
+                    displayOpenChart(data);
+                }
+                console.log(data);
+            }
+
+        });
+
+        }
+}
+
+
+
+</script>
+
+{% endblock %}

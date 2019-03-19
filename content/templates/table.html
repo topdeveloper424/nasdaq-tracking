@@ -1,0 +1,107 @@
+{% extends 'layouts/main.html' %}
+{% load staticfiles %}
+{% block content %}
+<div class="row">
+    <div class="page-header">
+        <div class="d-flex align-items-center">
+            <h2 class="page-header-title">Option Chain Table View</h2>
+            <div>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="db-default.html"><i class="ti ti-home"></i></a></li>
+                    <li class="breadcrumb-item active">Table View</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End Page Header -->
+<div class="row">
+    <div class="col-xl-12">
+        <!-- Sorting -->
+        <div class="widget has-shadow">
+            <div class="widget-header bordered no-actions d-flex align-items-center">
+                <button id="openModal" style="display:none" data-toggle="modal" data-target="#addModal"></button>
+                <select class="form-control" id="timeSelect" style="width:30%">
+                    {% for time in updated_times %}
+                    <option value="{{time.record_id}}">{{time.update_time}}</option>
+                    {% endfor %}
+                </select>
+                <img src="{% static 'assets/img/loader.svg' %}" width="50" height="50" id="loader" style="display:none">
+
+            </div>
+            <div class="widget-body">
+                <div class="table-responsive">
+                    <table id="sorting-table" class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Calls</th>
+                                <th>Last</th>
+                                <th>Chg</th>
+                                <th>Bid</th>
+                                <th>Ask</th>
+                                <th>Vol</th>
+                                <th>Open Int</th>
+                                <th>Root</th>
+                                <th>Strike</th>
+                                <th>Puts</th>
+                                <th>Last</th>
+                                <th>Chg</th>
+                                <th>Bid</th>
+                                <th>Ask</th>
+                                <th>Vol</th>
+                                <th>Open Int</th>
+                            </tr>
+                        </thead>
+                        <tbody id="chainTB">
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <!-- End Sorting -->
+    </div>
+</div>
+
+<script>
+    $(document).ready(function(){
+        select_time();
+        $( "#timeSelect" ).change(function() {
+            select_time();
+        });        
+        function select_time(){
+            $("#loader").show();
+            var record_id = $("#timeSelect").val();
+            if(record_id != ""){
+                $.ajax({
+                type: "GET",
+                url: "{% url 'main:get_data' %}",
+                dataType: 'json',
+                data: {record_id:record_id},
+                success: function (data) {
+                    console.log(data);
+                    var jsondata = JSON.parse(data);
+                    var html = "";
+                    for(var i = 0; i < jsondata.length; i ++){
+                        var model = jsondata[i].fields;
+                        html += "<tr><td>" + model.call_date + "</td><td>"+model.call_last+"</td><td>"+model.call_chg +"</td><td>"+model.call_bid +
+                        "</td><td>"+ model.call_ask+"</td><td>"+model.call_vol+"</td><td>"+model.call_open_int+"</td><td>"+model.root+"</td><td>"+model.strike+
+                        "</td><td>"+model.put_date+"</td><td>"+model.put_last+"</td><td>"+model.put_chg+"</td><td>"+model.put_bid+"</td><td>"+model.put_ask+
+                        "</td><td>"+model.put_vol+"</td><td>"+model.put_open_int+"</td></tr>";
+                    }
+                    $("#chainTB").html(html);
+                    $("#loader").hide();
+                }
+
+            });
+
+            }
+
+        }
+
+    });
+
+
+</script>
+
+{% endblock %}
